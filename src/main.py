@@ -6,7 +6,13 @@ import os
 from wtforms.validators import InputRequired
 from pathlib import Path
 import sys, fitz
-
+import spacy
+import json
+from spacy import displacy
+from tqdm import tqdm
+from spacy.tokens import DocBin
+import spacy_transformers
+import re
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['UPLOAD_FOLDER'] = 'static/'
@@ -43,9 +49,23 @@ def getPdfData(input_file):
     for page in doc:
         text = text + str(page.get_text())
 
-    with open("myfile.txt", "w") as file1:
-        # Writing data to a file
-        file1.writelines(text)
+    text = text.strip()
+
+    text = text.replace("\n", "")
+
+    # keep only alphanumerics
+    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+
+    print(str(text))
+
+    # with open("myfile.txt", "w") as file1:
+    #     # Writing data to a file
+    #     file1.writelines(text)
+
+    nlp_ner = spacy.load("src/best_model")
+    doc = nlp_ner(str(text))
+    for ent in doc.ents:
+        print(f'{ent.label_} - {ent.text}')
 
 
 if __name__ == '__main__':
