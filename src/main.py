@@ -32,7 +32,7 @@ class UploadFileForm(FlaskForm):
 def home():
     form = UploadFileForm()
     if form.validate_on_submit():
-        file = form.file.data#First grab the file
+        file = form.file.data #First grab the file
         file.save(os.path.join(os.path.abspath(os.path.dirname(__file__)), app.config['UPLOAD_FOLDER'], secure_filename(file.filename)))
         global input_file
         input_file = secure_filename(file.filename)
@@ -49,28 +49,30 @@ def getPdfData(input_file):
     fname = Path(__file__).parent / fullPath
     doc = fitz.open(fname)
 
+    # running through every page
     text = " "
     for page in doc:
         text = text + str(page.get_text())
         text = text.strip()
-        text = text.replace("\n", "")
+        text = text.replace("\n", " ")
         # keep only alphanumerics
         text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
-        custom_ner(text)
+        text = text + " "
+
+    custom_ner(text)
 
 
 def custom_ner(text):
     nlp_ner = spacy.load("src/nlp_model")
-    doc = nlp_ner(str(text))
+    doc_ = nlp_ner(str(text))
     dict = {}
     selected_dict = {}
-    for ent in doc.ents:
+    for ent in doc_.ents:
         print(f'{ent.label_} - {ent.text}')
         dict.update({ent.label_: ent.text})
-    print("dict:", dict)
-    for ent in doc.ents:
-        if ent.label_ == "Years of Experience" or ent.label_ == "Skills":
+        if ent.label_ == "Years of Experience" or ent.label_ == "Skills" or ent.label_ == "Location" or ent.label_ == "Designation":
             selected_dict.update({ent.label_: ent.text})
+    print("dict:", dict)
     print("selected_dict:", selected_dict)
 
 
