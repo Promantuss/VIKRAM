@@ -13,10 +13,13 @@ from tqdm import tqdm
 from spacy.tokens import DocBin
 import spacy_transformers
 import re
+from zipfile import ZipFile
+import pandas as pd
+
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['UPLOAD_FOLDER'] = 'static/'
-app.config['READ_FILE'] = 'static/files/input_file'
 
 
 class UploadFileForm(FlaskForm):
@@ -45,28 +48,36 @@ def getPdfData(input_file):
     fullPath = os.path.join(os.path.abspath(os.path.dirname(__file__)), app.config['UPLOAD_FOLDER'], input_file)
     fname = Path(__file__).parent / fullPath
     doc = fitz.open(fname)
+
     text = " "
     for page in doc:
         text = text + str(page.get_text())
+        text = text.strip()
+        text = text.replace("\n", "")
+        # keep only alphanumerics
+        text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+        custom_ner(text)
 
-    text = text.strip()
 
-    text = text.replace("\n", "")
-
-    # keep only alphanumerics
-    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
-
-    print(str(text))
-
-    # with open("myfile.txt", "w") as file1:
-    #     # Writing data to a file
-    #     file1.writelines(text)
-
-    nlp_ner = spacy.load("src/best_model")
+def custom_ner(text):
+    nlp_ner = spacy.load("src/nlp_model")
     doc = nlp_ner(str(text))
+    dict = {}
+    selected_dict = {}
     for ent in doc.ents:
         print(f'{ent.label_} - {ent.text}')
+        dict.update({ent.label_: ent.text})
+    print("dict:", dict)
+    for ent in doc.ents:
+        if ent.label_ == "Years of Experience" or ent.label_ == "Skills":
+            selected_dict.update({ent.label_: ent.text})
+    print("selected_dict:", selected_dict)
 
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+
+
