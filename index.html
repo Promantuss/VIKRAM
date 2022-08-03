@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Resume Screening</title>
+</head>
+<style>
+
+*{
+	padding: 0;
+	margin: 0;
+}
+
+.wrapper{
+	background: url(https://vervoe.com/wp-content/uploads/2021/10/resume-screening.jpg) no-repeat;
+	background-size: cover;
+	height: 100vh;
+}
+
+.navbar{
+	position: fixed;
+	height: 80px;
+	width: 100%;
+	top: 0;
+	left: 0;
+	background: rgba(0,0,0,0.4);
+}
+
+.navbar .logo{
+	width: 140px;
+	height: auto;
+	padding: 20px 100px;
+}
+
+.wrapper .center{
+	position: absolute;
+	left: 50%;
+	top: 5%;
+	transform: translate(-50%, -50%);
+	font-family: sans-serif;
+	user-select: none;
+}
+
+.center h1{
+	color: Tomato;
+	font-size: 50px;
+	width: 900px;
+	font-weight: bold;
+	text-align: center;
+}
+
+.wrapper .center1{
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	font-family: sans-serif;
+	user-select: none;
+}
+
+.file {
+    background-color: indigo;
+    color: white;
+    padding: 1.0rem;
+    font-family: sans-serif;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.file:hover {
+  background-color: #04AA6D;
+  color: black;
+}
+
+.upload {
+    background-color: indigo;
+    color: white;
+    padding: 1.0rem;
+    font-family: sans-serif;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.upload:hover {
+  background-color: #04AA6D;
+  color: black;
+}
+
+</style>
+
+<body>
+	<div class="wrapper">
+			<nav class="navbar">
+				<img class="logo" src="https://promantusinc.com/wp-content/uploads/2019/10/Promantus_logo-500x125.png">
+			</nav>
+			<div class="center">
+				<h1>RESUME SCREENING</h1>
+			</div>
+			<div class="center1">
+				<form method='POST' enctype='multipart/form-data'>
+                        {{form.hidden_tag()}}
+
+                        <div class="file">{{form.file()}} </div>
+                        <div class="upload">{{form.submit()}}</div>
+				</form>
+			</div>
+	</div>
+
+</body>
+</html>
