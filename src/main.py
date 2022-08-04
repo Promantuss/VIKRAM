@@ -22,6 +22,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
+
 model = SentenceTransformer('bert-base-nli-mean-tokens')
 nlp_ner = spacy.load("src/nlp_model")
 
@@ -40,8 +41,9 @@ class UploadFileForm(FlaskForm):
 def home():
     form = UploadFileForm()
     if form.validate_on_submit():
-        file = form.file.data #First grab the file
-        file.save(os.path.join(os.path.abspath(os.path.dirname(__file__)), app.config['UPLOAD_FOLDER'], secure_filename(file.filename)))
+        file = form.file.data  # First grab the file
+        file.save(os.path.join(os.path.abspath(os.path.dirname(__file__)), app.config['UPLOAD_FOLDER'],
+                               secure_filename(file.filename)))
         global input_file
         input_file = secure_filename(file.filename)
         print(input_file)
@@ -84,30 +86,60 @@ def custom_ner(text):
 
     # creating data frame with required features
     emp_df = pd.DataFrame(selected_dict, index=[0])
-    print(emp_df)
+    # print(emp_df)
     emp_df.to_csv("resumes_doc.csv")
 
-    df = pd.read_csv(r"michaelres.csv")
-    # df_combined = pd.concat([df, emp_df], axis=1)
-    # print(df_combined)
+    df_emp = pd.read_csv(r"michaelres.csv")
 
-    title = []
+    title = " "
     for i in emp_df.columns:
-        title = emp_df[i].tolist()
-    claim = []
-    for i in df.columns:
-        claim = df[i].tolist()
+        title1 = emp_df[i]
+        title = title + " " + str(title1[0])
+        title = re.sub(r'[^a-zA-Z\s]', '', title)
+    title = title.split(",")
+    print(title)
+    claim = " "
+    for i in df_emp.columns:
+        claim1 = df_emp[i]
+        claim = claim + " " + str(claim1[0])
+        claim = re.sub(r'[^a-zA-Z\s]', '', claim)
+    claim = claim.split(",")
+    print(claim)
     title = model.encode(title)
     claim = model.encode(claim)
 
     cosine_similarity(title[0].reshape(1, -1), claim[0].reshape(1, -1))
-    print(cosine_similarity(title[0].reshape(1, -1), claim[0].reshape(1, -1)))
+    print("Similarity: ", cosine_similarity(title[0].reshape(1, -1), claim[0].reshape(1, -1)))
+
+
+
+##############################################################################################################
+
+    # df_combined = pd.concat([df_emp, emp_df], axis=0)
+    # df_combined.reset_index(inplace=True, drop=True)
+    # df_combined = df_combined.drop(columns="Unnamed: 0")
+    # # print(df_combined)
+
+    # a_list = []
+    # for i in range((df_combined.shape[0])):
+    #     cur_row = []
+    #     for j in range(df_combined.shape[1]):
+    #         cur_row.append(df_combined.iat[i, j])
+    #     a_list.append(cur_row)
+    #
+    # # one = ", ".join(a_list[0])
+    # # one = re.sub(r'[^a-zA-Z\s]', '', one)
+    # print(a_list)
+    # res = [' '.join(ele) for ele in a_list]
+    # print(res)
+    #
+    # title = model.encode(res)
+    # # claim = model.encode(res)
+    #
+    # cosine_similarity([title[0]], title[0:])
+    # print("Similarity: ", cosine_similarity([title[0]], title[0:]))
+############################################################################################
 
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
-
