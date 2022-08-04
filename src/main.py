@@ -15,7 +15,15 @@ import spacy_transformers
 import re
 from zipfile import ZipFile
 import pandas as pd
-
+import docx2txt
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+model = SentenceTransformer('bert-base-nli-mean-tokens')
+nlp_ner = spacy.load("src/nlp_model")
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
@@ -63,7 +71,6 @@ def getPdfData(input_file):
 
 
 def custom_ner(text):
-    nlp_ner = spacy.load("src/nlp_model")
     doc_ = nlp_ner(str(text))
     dict = {}
     selected_dict = {}
@@ -74,6 +81,27 @@ def custom_ner(text):
             selected_dict.update({ent.label_: ent.text})
     print("dict:", dict)
     print("selected_dict:", selected_dict)
+
+    # creating data frame with required features
+    emp_df = pd.DataFrame(selected_dict, index=[0])
+    print(emp_df)
+    emp_df.to_csv("resumes_doc.csv")
+
+    df = pd.read_csv(r"michaelres.csv")
+    # df_combined = pd.concat([df, emp_df], axis=1)
+    # print(df_combined)
+
+    title = []
+    for i in emp_df.columns:
+        title = emp_df[i].tolist()
+    claim = []
+    for i in df.columns:
+        claim = df[i].tolist()
+    title = model.encode(title)
+    claim = model.encode(claim)
+
+    cosine_similarity(title[0].reshape(1, -1), claim[0].reshape(1, -1))
+    print(cosine_similarity(title[0].reshape(1, -1), claim[0].reshape(1, -1)))
 
 
 if __name__ == '__main__':
