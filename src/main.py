@@ -25,7 +25,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 model = SentenceTransformer('bert-base-nli-mean-tokens')
-nlp_ner = spacy.load("src/nlp_model")
+nlp_ner = spacy.load("src/updated model-best")
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
@@ -65,7 +65,6 @@ def getPdfData(input_file):
         resume_text = [line.replace('\t', ' ') for line in temp.split('\n') if line]
         text = ' '.join(resume_text)
         text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
-        # return (text)
 
         custom_ner(text)
 
@@ -81,35 +80,48 @@ def getPdfData(input_file):
             # keep only alphanumerics
             text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
             text = text + " "
-
         custom_ner(text)
 
     # Processing Zip File
     elif input_file.endswith('.zip'):
         with ZipFile(fname, 'r') as zip:
+
         # printing all the contents of the zip file
             zip.printdir()
             cheth = zip.namelist()
-            print("cheth", 1, cheth)
 
             zip.extractall()
-
-            list = []
+            list_docx = []
+            list_pdf = []
             for j in cheth:
-                doc2 = fitz.open(j)
-                print("doc2: ", doc2)
-                text = " "
-                for page in doc2:
-                    text = text + str(page.get_text())
-                    text = text.strip()
-                    text = text.replace("\n", " ")
-                    # keep only alphanumerics
+                if j.endswith('.pdf'):
+                    print("j", j)
+                    doc2 = fitz.open(j)
+                    print("doc2: ", doc2)
+                    text = " "
+                    for page in doc2:
+                        text = text + str(page.get_text())
+                        text = text.strip()
+                        text = text.replace("\n", " ")
+                        # keep only alphanumerics
+                        text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+                        text = text + " "
+                        # print(text)
+                    list_pdf.append(text)
+
+                if j.endswith('.docx'):
+                    temp = docx2txt.process(j)
+                    resume_text = [line.replace('\t', ' ') for line in temp.split('\n') if line]
+                    text = ' '.join(resume_text)
                     text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
-                    text = text + " "
-                    # print(text)
-                list.append(text)
-            print(list)
-        customZip_ner(list)
+                    list_docx.append(text)
+
+                else:
+                    print("File Not Supported")
+
+            list = list_pdf + list_docx
+
+            customZip_ner(list)
     else:
         print("File Not Supported")
 
@@ -136,14 +148,16 @@ def custom_ner(text):
 
     job_desc = pd.read_csv(r"michaelres.csv")
 
-    df_combined = pd.concat([job_desc, emp_df], axis=0)
+    df_combined = pd.DataFrame(columns=["Years of Experience", "Skills", "Location", "Designation"])
+    df_combined = pd.concat([df_combined, job_desc, emp_df], axis=0)
     df_combined.reset_index(inplace=True, drop=True)
     df_combined = df_combined.drop(columns="Unnamed: 0")
-    print(df_combined)
     df_combined["Years of Experience"].fillna("Not Mentioned", inplace=True)
+    df_combined["Designation"].fillna("Not Mentioned", inplace=True)
+    df_combined["Skills"].fillna("Not Mentioned", inplace=True)
     df_combined["Location"].fillna("Not Mentioned", inplace=True)
     df_combined = df_combined.fillna(0)
-    print(df_combined)
+    # print(df_combined)
 
     title = " "
     for i in emp_df.columns:
@@ -151,37 +165,41 @@ def custom_ner(text):
         title = title + " " + str(title1[0])
         title = re.sub(r'[^a-zA-Z\s]', '', title)
     title = title.split(",")
-    print(title)
+    # print(title)
     claim = " "
     for i in job_desc.columns:
         claim1 = job_desc[i]
         claim = claim + " " + str(claim1[0])
         claim = re.sub(r'[^a-zA-Z\s]', '', claim)
     claim = claim.split(",")
-    print(claim)
+    # print(claim)
     title = model.encode(title)
     claim = model.encode(claim)
 
     cos_sim = cosine_similarity(title[0].reshape(1, -1), claim[0].reshape(1, -1))
-    print("Similarity: ", cosine_similarity(title[0].reshape(1, -1), claim[0].reshape(1, -1)))
+    # print("Similarity: ", cosine_similarity(title[0].reshape(1, -1), claim[0].reshape(1, -1)))
 
     cos = cos_sim[0]
     # print(cos)
     status = []
+    # percent = int(input("Enter the threshold: "))
     if cos[0] > 0.8:
-        sta = "Matches"
+        sta = "Match"
         status.append(sta)
     else:
-        sta = "Doesn't Matches"
+        sta = "Doesn't Match"
         status.append(sta)
 
+    cosColumn_df = pd.DataFrame(columns=["Name", "Similarity", "Status"])
     cos_df = pd.DataFrame(dict, index=[0])
+    # print(cos_df)
+    cos_df = pd.concat([cosColumn_df, cos_df], axis=0)
 
     cos_df['Similarity'] = pd.Series(cos)
     cos_df['Status'] = pd.Series(status)
-
+    cos_df["Name"].fillna("Not Mentioned", inplace=True)
     cos_df = cos_df[['Name', 'Similarity', 'Status']]
-    print(cos_df)
+    # print(cos_df)
 
     # cosine_df.append(cos_df)
     cosine_df = pd.concat([cos_df, cosine_df], axis=0, ignore_index=True)
@@ -211,14 +229,16 @@ def customZip_ner(text):
 
         job_desc = pd.read_csv(r"michaelres.csv")
 
-        df_combined = pd.concat([job_desc, emp_df], axis=0)
+        df_combined = pd.DataFrame(columns=["Years of Experience", "Skills", "Location", "Designation"])
+        df_combined = pd.concat([df_combined, job_desc, emp_df], axis=0)
         df_combined.reset_index(inplace=True, drop=True)
         df_combined = df_combined.drop(columns="Unnamed: 0")
-        print(df_combined)
         df_combined["Years of Experience"].fillna("Not Mentioned", inplace=True)
+        df_combined["Designation"].fillna("Not Mentioned", inplace=True)
+        df_combined["Skills"].fillna("Not Mentioned", inplace=True)
         df_combined["Location"].fillna("Not Mentioned", inplace=True)
         df_combined = df_combined.fillna(0)
-        print(df_combined)
+        # print(df_combined)
 
         title = " "
         for i in emp_df.columns:
@@ -226,19 +246,19 @@ def customZip_ner(text):
             title = title + " " + str(title1[0])
             title = re.sub(r'[^a-zA-Z\s]', '', title)
         title = title.split(",")
-        print(title)
+        # print(title)
         claim = " "
         for i in job_desc.columns:
             claim1 = job_desc[i]
             claim = claim + " " + str(claim1[0])
             claim = re.sub(r'[^a-zA-Z\s]', '', claim)
         claim = claim.split(",")
-        print(claim)
+        # print(claim)
         title = model.encode(title)
         claim = model.encode(claim)
 
         cos_sim = cosine_similarity(title[0].reshape(1, -1), claim[0].reshape(1, -1))
-        print("Similarity: ", cosine_similarity(title[0].reshape(1, -1), claim[0].reshape(1, -1)))
+        # print("Similarity: ", cosine_similarity(title[0].reshape(1, -1), claim[0].reshape(1, -1)))
 
         cos = cos_sim[0]
         # print(cos)
@@ -250,13 +270,15 @@ def customZip_ner(text):
             sta = "Doesn't Matches"
             status.append(sta)
 
+        cosColumn_df = pd.DataFrame(columns=["Name", "Similarity", "Status"])
         cos_df = pd.DataFrame(dict, index=[0])
+        cos_df = pd.concat([cosColumn_df, cos_df], axis=0)
 
         cos_df['Similarity'] = pd.Series(cos)
         cos_df['Status'] = pd.Series(status)
-
+        cos_df["Name"].fillna("Not Mentioned", inplace=True)
         cos_df = cos_df[['Name', 'Similarity', 'Status']]
-        print(cos_df)
+        # print(cos_df)
 
         # cosine_df.append(cos_df)
         cosine_df = pd.concat([cos_df, cosine_df], axis=0, ignore_index=True)
@@ -265,3 +287,4 @@ def customZip_ner(text):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
