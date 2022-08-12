@@ -85,15 +85,14 @@ def getPdfData(input_file):
     # Processing Zip File
     elif input_file.endswith('.zip'):
         with ZipFile(fname, 'r') as zip:
-
         # printing all the contents of the zip file
             zip.printdir()
-            cheth = zip.namelist()
-
+            file_names = zip.namelist()
             zip.extractall()
+
             list_docx = []
             list_pdf = []
-            for j in cheth:
+            for j in file_names:
                 if j.endswith('.pdf'):
                     print("j", j)
                     doc2 = fitz.open(j)
