@@ -1,7 +1,7 @@
 To create virtaul environment 
 ```bash
 pip install virtualenv 
-python -m virtalenv rolex 
+python -m virtualenv rolex 
 cd rolex
 cd scripts
 activate 
