@@ -121,9 +121,7 @@ def getPdfData(input_file):
             list = list_pdf + list_docx
 
             customZip_ner(list)
-    else:
-        print("File Not Supported")
-
+    
 
 def custom_ner(text):
     cosine_df = pd.DataFrame()
