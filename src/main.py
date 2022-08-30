@@ -120,7 +120,7 @@ def getPdfData(input_file):
 
             list = list_pdf + list_docx
 
-            customZip_ner(list)
+            custom_ner(list)
     
 
 def custom_ner(text):
